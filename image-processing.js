@@ -6,7 +6,7 @@ var labelFileBuffer = fs.readFileSync(__dirname + '/dataset/train-labels.idx1-ub
 var pixelValues = [];
 
 // It would be nice with a checker instead of a hard coded 60000 limit here
-for (var image = 0; image <= 59999 +; image++) {
+for (var image = 0; image <= 59999; image++) {
     var pixels = [];
 
     for (var x = 0; x <= 27; x++) {
@@ -26,7 +26,7 @@ var json = JSON.stringify(pixelValues);
 
 // console.log(Object.keys(imageData).length);
 
-fs.writeFile("test.json", json, function (err) {
+fs.writeFile("data.json", json, function (err) {
     if (err) {
         console.log(err);
     }
