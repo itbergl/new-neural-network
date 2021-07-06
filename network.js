@@ -5,6 +5,8 @@ class Network {
         this.input_layer = new InputLayer(input);
         this.output_layer = new OutputLayer(output, input, 0);
         this.layers = [];
+
+        this.alpha = 0.5;
     }
 
     addHiddenLayer(dim) {
@@ -20,10 +22,6 @@ class Network {
 
     }
 
-    buildNetwork() {
-
-    }
-
     get desc() {
         console.log(this.input_layer.desc);
         for (const l of this.layers) {
@@ -31,7 +29,6 @@ class Network {
         }
         console.log(this.output_layer.desc);
     }
-
 
 }
 
@@ -63,7 +60,7 @@ class InnerLayer extends Layer {
         super(dim);
         this.level = level;
         this.bias = math.zeros(dim);
-        this.weight = math.zeros(dim, dim_from);
+        this.weight = math.multiply(1 / dim_from, math.ones(dim, dim_from));
     }
 
     get desc() {
@@ -95,9 +92,6 @@ class OutputLayer extends InnerLayer {
 
 let network = new Network(2048, 10);
 
-network.addHiddenLayer(10);
-network.addHiddenLayer(2);
-network.addHiddenLayer(12);
-network.addHiddenLayer(100);
 
-console.log(network.desc)
+
+// console.log(network.layers[1].weight);
