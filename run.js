@@ -1,10 +1,8 @@
+network = new Network(784, 10);
 
 network.addHiddenLayer(10);
-network.addHiddenLayer(2);
-network.addHiddenLayer(12);
-network.addHiddenLayer(100);
 
-console.log(network.desc)
+// console.log(network.desc)
 
 
 // console.log(imageData[0]);
@@ -13,9 +11,13 @@ console.log(network.desc)
 
 // console.log(Object.keys(dodo[0]));
 
+//28 x 28
+
 network.inputTrainingImage(0)
 
 console.log(network.input_buffer);
 console.log(network.target_buffer);
+
+network.temp();
 
 // console.log("100");

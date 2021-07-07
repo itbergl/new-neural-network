@@ -32,7 +32,21 @@ class Network {
         console.log(this.output_layer.desc);
     }
 
-    inputTrainingImage(image_index) {
+    passTrainingImage(image_index) {
+
+        this.inputTrainingImage(image_index);
+
+        let data_holder = this.input_buffer;
+
+        for (const l of this.layers) {
+            data_holder = l.makePass(data_holder);
+        }
+
+        this.output_layer.processOutput(data_holder);
+
+    }
+
+    #inputTrainingImage(image_index) {
 
         // get image and target
         let image_map = data_set[image_index];
@@ -85,7 +99,7 @@ class InnerLayer extends Layer {
         super(dim);
         this.level = level;
         this.bias = math.zeros(dim);
-        this.weight = math.multiply(1 / dim_from, math.ones(dim, dim_from));
+        this.weight = math.multiply(0.5, math.ones(dim, dim_from));
     }
 
     get desc() {
@@ -93,7 +107,7 @@ class InnerLayer extends Layer {
     }
 
     makePass(inputVec) {
-        return math.multiply(this.weight, inputVec) + this.bias;
+        return math.multiply(this.weight, math.transpose(inputVec));
     }
 
 }
