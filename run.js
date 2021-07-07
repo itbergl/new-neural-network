@@ -2,16 +2,25 @@ network = new Network([724, 256, 10]);
 
 network.desc();
 
-function logLoss(soft_vec, result) {
-    let net_loss = 0;
-    for (let i = 0; i < soft_vec.length; i++) {
-        let y_pred = soft_vec[i];
-        let y = result[i];
-        net_loss += y * (-1 * math.log(y_pred)) + (1 - y) * (-1 * math.log(1 - y_pred));
-    }
+console.log('---------------------------------');
 
-    return net_loss;
-}
+console.log(`loss was ${network.loss}`)
+network.passTrainingImages();
+console.log(`loss is ${network.loss}`)
+
+
+
+// console.log(sigmoid([1, 10, 100000000, 0]));
+// function logLoss(soft_vec, result) {
+//     let net_loss = 0;
+//     for (let i = 0; i < soft_vec.length; i++) {
+//         let y_pred = soft_vec[i];
+//         let y = result[i];
+//         net_loss += y * (-1 * math.log(y_pred)) + (1 - y) * (-1 * math.log(1 - y_pred));
+//     }
+
+//     return net_loss;
+// }
 
 // console.log(logLoss([0.90, 0.05, 0.05], [1, 0, 0]));
 

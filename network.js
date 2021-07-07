@@ -12,9 +12,10 @@ class Network {
         }
         this.layers.push(new OutputLayer(layers[layers.length - 1], layers.length - 1))
 
-
         this.target_buffer = null;
         this.input_buffer = null;
+
+        this.loss = [];
     }
 
     //TODO
@@ -28,17 +29,20 @@ class Network {
         return this.layers[this.layers.length - 1]
     }
 
-    passTrainingImage(image_index) {
 
-        this.inputTrainingImage(image_index);
+    passTrainingImages() {
 
-        let data_holder = this.input_buffer;
+        for (let i = 0; i < 1000; i++) {
+            this.#inputTrainingImage(i);
 
-        for (let i = 0; i < this.layers - 1; i++) {
-            data_holder = this.layers[i].passTrainingData(data_holder);
+            let data_holder = this.input_buffer;
+
+            for (let j = 0; j < this.layers - 1; j++) {
+                data_holder = this.layers[j].passTrainingData(data_holder);
+            }
+
+            this.loss.push(this.output_layer.processOutput(data_holder, this.target_buffer));
         }
-
-        this.output_layer.processOutput(data_holder);
 
     }
 
@@ -92,7 +96,18 @@ class InnerLayer extends Layer {
     }
 
     passTrainingData(inputVec) {
-        return math.multiply(this.weight, math.transpose(inputVec));
+        return this.#sigmoid(math.multiply(this.weight, math.transpose(inputVec)) + this.bias);
+    }
+
+    #sigmoid(vec) {
+        let ret = []
+        let to_invert = math.add(1, math.exp(math.multiply(-1, vec)));
+
+        for (let i = 0; i < ret.length; i++) {
+            ret.push(1 / to_invert[i]);
+        }
+
+        return ret;
     }
 
 }
@@ -119,8 +134,8 @@ class OutputLayer extends Layer {
     }
 
     processOutput(input, result) {
-        let soft_vec = this.sofmax(input);
-        let loss = this.logLoss(soft_vec, result);
+        let soft_vec = this.#softmax(input);
+        let loss = this.#logLoss(soft_vec, result);
         let guess = this.#getPrediction(soft_vec);
         return guess.push(loss);
     }
