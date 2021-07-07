@@ -1,35 +1,31 @@
 
 class Network {
 
-    constructor(input, output) {
-        this.input_layer = new InputLayer(input);
-        this.output_layer = new OutputLayer(output, input, 0);
-        this.layers = [];
+    constructor(layers) {
 
         this.alpha = 0.5;
+
+        this.layers = [new InputLayer(layers[0], layers[1])];
+
+        for (let i = 1; i < layers.length - 1; i++) {
+            this.layers.push(new InnerLayer(layers[i], layers[i + 1], i));
+        }
+        this.layers.push(new OutputLayer(layers[layers.length - 1], layers.length - 1))
+
+
         this.target_buffer = null;
         this.input_buffer = null;
     }
 
-    addHiddenLayer(dim) {
-        let lastDim = this.input_layer.dim;
-
-        if (this.layers.length > 0) {
-            lastDim = this.layers[this.layers.length - 1].dim;
-        }
-
-        this.layers.push(new InnerLayer(dim, lastDim, this.layers.length + 1));
-        this.output_layer.level = this.layers.length + 1;
-        this.output_layer.adjust(dim);
-
-    }
-
-    get desc() {
-        console.log(this.input_layer.desc);
+    //TODO
+    desc() {
         for (const l of this.layers) {
             console.log(l.desc);
         }
-        console.log(this.output_layer.desc);
+    }
+
+    get output_layer() {
+        return this.layers[this.layers.length - 1]
     }
 
     passTrainingImage(image_index) {
@@ -38,8 +34,8 @@ class Network {
 
         let data_holder = this.input_buffer;
 
-        for (const l of this.layers) {
-            data_holder = l.makePass(data_holder);
+        for (let i = 0; i < this.layers - 1; i++) {
+            data_holder = this.layers[i].passTrainingData(data_holder);
         }
 
         this.output_layer.processOutput(data_holder);
@@ -82,10 +78,29 @@ class Layer {
     }
 }
 
-class InputLayer extends Layer {
+class InnerLayer extends Layer {
 
-    constructor(dim) {
+    constructor(dim, dim_to, level) {
         super(dim);
+        this.level = level;
+        this.bias = math.zeros(dim);
+        this.weight = math.multiply(0.5, math.ones(dim_to, dim));
+    }
+
+    get desc() {
+        return `Layer ${this.level} (${this.dim} nodes)`;
+    }
+
+    passTrainingData(inputVec) {
+        return math.multiply(this.weight, math.transpose(inputVec));
+    }
+
+}
+
+class InputLayer extends InnerLayer {
+
+    constructor(dim, dim_from) {
+        super(dim, dim_from, 0);
     }
 
     get desc() {
@@ -93,61 +108,50 @@ class InputLayer extends Layer {
     }
 }
 
-class InnerLayer extends Layer {
+class OutputLayer extends Layer {
 
-    constructor(dim, dim_from, level) {
-        super(dim);
-        this.level = level;
-        this.bias = math.zeros(dim);
-        this.weight = math.multiply(0.5, math.ones(dim, dim_from));
-    }
-
-    get desc() {
-        return `Layer ${this.level} (${this.dim} nodes)`;
-    }
-
-    makePass(inputVec) {
-        return math.multiply(this.weight, math.transpose(inputVec));
-    }
-
-}
-
-class OutputLayer extends InnerLayer {
-
-    constructor(dim, dim_from, level) {
-        super(dim, dim_from, level);
-    }
-
-    adjust(dim_from) {
-        this.dim_from = dim_from;
-        this.bias = math.zeros(dim_from);
-        this.weight = math.zeros(this.dim, dim_from);
+    constructor(dim, level) {
+        super(dim, level);
     }
 
     get desc() {
         return `Output Layer (${this.dim} nodes)`;
     }
 
-    processOutput(input) {
-        let out_vec = math.multiply(this.weight, inputVec) + this.bias;
-
-
-        //get softmax vector
-
-        //calculate loss
-
-
-
+    processOutput(input, result) {
+        let soft_vec = this.sofmax(input);
+        let loss = this.logLoss(soft_vec, result);
+        let guess = this.#getPrediction(soft_vec);
+        return guess.push(loss);
     }
 
-    softmax() {
-
+    #softmax(input) {
+        let output = [];
+        let sum = 0;
+        for (const i of input) { sum += i; }
+        for (const i of input) { output.push(i / sum); }
+        return output;
     }
 
+    #logLoss(soft_vec, result) {
+        let net_loss = 0;
+        for (let i = 0; i < soft_vec.length; i++) {
+            let y_pred = soft_vec[i];
+            let y = result[i];
+            net_loss += y * (-1 * math.log(y_pred)) + (1 - y) * (-1 * math.log(1 - y_pred));
+        }
+        return net_loss;
+    }
+
+    #getPrediction(soft_vec) {
+        let max = -1;
+        let max_index = -1;
+        for (let i = 0; i < soft_vec.length; i++) {
+            if (soft_vec[i] > max) {
+                max = soft_vec[i]
+                max_index = i;
+            }
+        }
+        return [max_index, max];
+    }
 }
-
-let network = new Network(2048, 10);
-
-
-
-// console.log(network.layers[1].weight);
