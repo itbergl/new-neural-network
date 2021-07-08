@@ -43,7 +43,14 @@ class Network {
                 data_holder = this.layers[j].passTrainingData(data_holder);
             }
             let output = this.output_layer.processOutput(data_holder, this.target_buffer);
-            console.log(`Output:\n\tGuess: ${output[0][0]}\n\tConfidence: ${output[0][1]}\n\tLoss: ${output[1]}}`);
+            let confidence = output[0][1].toFixed(2);
+            let loss = [];
+            math.forEach(output[1], function (value) {
+                loss.push(value.toFixed(5));
+            })
+
+
+            console.log(`Output:\n\tGuess: ${output[0][0]}\n\tConfidence: ${confidence}\n\tLoss: ${loss}}`);
         }
 
     }
