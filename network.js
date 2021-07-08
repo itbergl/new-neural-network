@@ -32,16 +32,18 @@ class Network {
 
     passTrainingImages() {
 
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 1; i++) {
             this.#inputTrainingImage(i);
 
-            let data_holder = this.input_buffer;
 
-            for (let j = 0; j < this.layers - 1; j++) {
+            let data_holder = this.input_buffer;
+            // console.log(`data holder is ${data_holder}`);
+            for (let j = 0; j < this.layers.length - 1; j++) {
+                console.log(`Pass ${j}`);
                 data_holder = this.layers[j].passTrainingData(data_holder);
             }
-
-            this.loss.push(this.output_layer.processOutput(data_holder, this.target_buffer));
+            let output = this.output_layer.processOutput(data_holder, this.target_buffer);
+            console.log(`Output:\n\tGuess: ${output[0][0]}\n\tConfidence: ${output[0][1]}\n\tLoss: ${output[1]}}`);
         }
 
     }
@@ -63,11 +65,12 @@ class Network {
             }
         }
         //convert to math.js matrix object for processing
-        let target_vec = math.matrix([prim_array]);
+        let target_vec = math.matrix(prim_array);
 
         // hold the input data and real target in the network class
+        // console.log(`target buffer set to ${target_vec}`)
         this.target_buffer = target_vec;
-        this.input_buffer = image_map[target_num];
+        this.input_buffer = math.matrix(Array.from(image_map[target_num]));
     }
 }
 
@@ -87,8 +90,8 @@ class InnerLayer extends Layer {
     constructor(dim, dim_to, level) {
         super(dim);
         this.level = level;
-        this.bias = math.zeros(dim);
-        this.weight = math.multiply(0.5, math.ones(dim_to, dim));
+        this.bias = math.zeros(dim_to);
+        this.weight = math.multiply(0.5, math.ones(dim, dim_to));
     }
 
     get desc() {
@@ -96,16 +99,23 @@ class InnerLayer extends Layer {
     }
 
     passTrainingData(inputVec) {
-        return this.#sigmoid(math.multiply(this.weight, math.transpose(inputVec)) + this.bias);
+        let sizeA = math.size(this.weight);
+        let sizeB = math.size(inputVec);
+        console.log(`Layer ${this.level}: multiplying ${sizeA} with ${sizeB}`);
+
+        let z = math.add(math.multiply(inputVec, this.weight), this.bias);
+        let out = this.#sigmoid(z);
+        console.log(`\tResult: vector of size ${math.size(out)}`)
+        return out;
     }
 
     #sigmoid(vec) {
         let ret = []
         let to_invert = math.add(1, math.exp(math.multiply(-1, vec)));
 
-        for (let i = 0; i < ret.length; i++) {
-            ret.push(1 / to_invert[i]);
-        }
+        math.forEach(to_invert, function (value) {
+            ret.push(1 / value);
+        })
 
         return ret;
     }
@@ -114,8 +124,8 @@ class InnerLayer extends Layer {
 
 class InputLayer extends InnerLayer {
 
-    constructor(dim, dim_from) {
-        super(dim, dim_from, 0);
+    constructor(dim, dim_to) {
+        super(dim, dim_to, 0);
     }
 
     get desc() {
@@ -134,39 +144,59 @@ class OutputLayer extends Layer {
     }
 
     processOutput(input, result) {
+        console.log(`Processing ${math.size(input)} vs ${math.size(result)}`);
+        // console.log(`Output Layer recieved: ${input} of size ${input.length}`);
         let soft_vec = this.#softmax(input);
+        // console.log(`Softmax returned: ${soft_vec}`);
         let loss = this.#logLoss(soft_vec, result);
+        // console.log(`LogLoss returned: ${loss}`);
         let guess = this.#getPrediction(soft_vec);
-        return guess.push(loss);
+        // console.log(`Guess returned: ${guess}`);
+        let ret = [guess, loss];
+        return ret;
     }
 
     #softmax(input) {
-        let output = [];
+        // console.log(`Attempting a Softmax on ${math.size(input)}`);
+
         let sum = 0;
-        for (const i of input) { sum += i; }
-        for (const i of input) { output.push(i / sum); }
-        return output;
+        let to_ten_vec = [];
+
+        math.forEach(input, function (value) {
+            let to_ten = math.pow(Math.E, value)
+            to_ten_vec.push(to_ten);
+            sum += to_ten;
+        })
+
+        return math.divide(to_ten_vec, sum);
     }
 
-    #logLoss(soft_vec, result) {
-        let net_loss = 0;
-        for (let i = 0; i < soft_vec.length; i++) {
-            let y_pred = soft_vec[i];
-            let y = result[i];
-            net_loss += y * (-1 * math.log(y_pred)) + (1 - y) * (-1 * math.log(1 - y_pred));
-        }
-        return net_loss;
+    #logLoss(soft_vec, y) {
+        console.log(`Attempting Log Loss on ${math.size(soft_vec)} and ${math.size(y)}`);
+        let J = math.ones(math.size(soft_vec));
+        let A = math.dotMultiply(y, math.multiply(-1, math.log(soft_vec)));
+        // console.log(`A is ${A}`);
+        let B_a = math.subtract(J, soft_vec);
+        // console.log(`B_a is ${B_a}`);
+        // let B_b = math.multiply(-1, math.log(math.add(1, math.multiply(-1, soft_vec))));
+        let B_b = math.multiply(-1, math.log(math.add(J, math.multiply(-1, soft_vec))));
+        // console.log(`B_b is ${B_b}`);
+        let ret = math.add(A, math.multiply(B_a, B_b));
+        return ret;
     }
 
     #getPrediction(soft_vec) {
         let max = -1;
         let max_index = -1;
-        for (let i = 0; i < soft_vec.length; i++) {
-            if (soft_vec[i] > max) {
-                max = soft_vec[i]
-                max_index = i;
+
+        let index = 0;
+        math.forEach(soft_vec, function (value) {
+            if (value > max) {
+                max = value
+                max_index = index;
+                index++;
             }
-        }
+        })
         return [max_index, max];
     }
 }

@@ -1,13 +1,34 @@
-network = new Network([724, 256, 10]);
+network = new Network([784, 392, 196, 10]);
 
 network.desc();
 
 console.log('---------------------------------');
 
-console.log(`loss was ${network.loss}`)
-network.passTrainingImages();
-console.log(`loss is ${network.loss}`)
+// let mat = math.matrix([[1, 2], [3, 4], [3, 4]]);
+// let vec = [1, 1];
 
+// let sizeA = math.size(mat);
+// let sizeB = vec.length;
+// console.log(`multiplying ${sizeA} with ${sizeB}`);
+
+// console.log(math.multiply(mat, vec));
+
+network.passTrainingImages();
+
+// function logLoss(soft_vec, y) {
+//     let J = math.ones(math.size(soft_vec));
+//     let A = math.dotMultiply(y, math.multiply(-1, math.log(soft_vec)));
+//     // console.log(`A is ${A}`);
+//     let B_a = math.subtract(J, soft_vec);
+//     // console.log(`B_a is ${B_a}`);
+//     // let B_b = math.multiply(-1, math.log(math.add(1, math.multiply(-1, soft_vec))));
+//     let B_b = math.multiply(-1, math.log(math.add(J, math.multiply(-1, soft_vec))));
+//     // console.log(`B_b is ${B_b}`);
+//     let ret = math.add(A, math.multiply(B_a, B_b));
+//     return ret;
+// }
+
+// console.log(logLoss(math.matrix([0.1, 0.6, 0.3]), math.matrix([1, 0, 0])));
 
 
 // console.log(sigmoid([1, 10, 100000000, 0]));
